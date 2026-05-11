@@ -27,25 +27,28 @@ model Sport {
   teams     Team[]
 }
 
-model Team{
+model Team {
   id          String   @id @default(cuid())
   name        String
   town        String
   type        String
-  sport       Sport
+  sport       Sport    @relation(fields: [sportId], references: [id])
   sportId     String
   year        Int
-  roster      Athlete[]
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+  roster      AthleteTeam[]
+  homeGames   Game[]   @relation("HomeTeam")
+  awayGames   Game[]   @relation("AwayTeam")
 }
 
-model Athlete{
-  id         String   @id @default(cuid())
-  firstName  String
-  lastName   String
+model Athlete {
+  id          String    @id @default(cuid())
+  firstName   String
+  lastName    String
   dateOfBirth DateTime?
   teamHistory AthleteTeam[]
   gameStats   AthleteGameStat[]
-
 }
 
 model Season {
@@ -57,50 +60,58 @@ model Season {
 }
 
 model Game {
-  id        String   @id @default(cuid())
-  date      DateTime
-  seasonId  String
-  season    Season   @relation(fields: [seasonId], references: [id])
-  homeTeamId String
-  awayTeamId String
-  homeTeam  Team @relation("HomeTeam", fields: [homeTeamId], references: [id])
-  awayTeam  Team @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  id           String   @id @default(cuid())
+  date         DateTime
+  seasonId     String
+  season       Season   @relation(fields: [seasonId], references: [id])
+  homeTeamId   String
+  awayTeamId   String
+  homeTeam     Team     @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam     Team     @relation("AwayTeam", fields: [awayTeamId], references: [id])
   athleteStats AthleteGameStat[]
 }
 
 model AthleteTeam {
-  id         String   @id @default(cuid())
-  athleteId  String
-  teamId     String
-  startDate  DateTime
-  endDate    DateTime?
-
-  athlete    Athlete  @relation(fields: [athleteId], references: [id])
-  team       Team     @relation(fields: [teamId], references: [id])
+  id        String    @id @default(cuid())
+  athleteId String
+  teamId    String
+  startDate DateTime
+  endDate   DateTime?
+  athlete   Athlete   @relation(fields: [athleteId], references: [id])
+  team      Team      @relation(fields: [teamId], references: [id])
 
   @@index([athleteId])
   @@index([teamId])
 }
 
 model AthleteGameStat {
-  id         String  @id @default(cuid())
+  id            String  @id @default(cuid())
+  athleteId     String
+  gameId        String
+  athlete       Athlete @relation(fields: [athleteId], references: [id])
+  game          Game    @relation(fields: [gameId], references: [id])
 
-  athleteId  String
-  gameId     String
+  //Football
+  completions        Int?
+  passAttempts       Int?
+  passingYards       Int?
+  passingTds         Int?
+  thrownInterceptions Int?
 
-  athlete    Athlete @relation(fields: [athleteId], references: [id])
-  game       Game    @relation(fields: [gameId], references: [id])
+  carries            Int?
+  rushingYards       Int?
+  rushingTouchdowns  Int?
 
-  // Common stats (extend as needed per sport)
-  minutesPlayed Int?
+  receptions         Int?
+  receivingYards     Int?
+  receivingTds       Int?
 
-  points     Int?    // basketball
-  assists    Int?
-  rebounds   Int?
+  tackles            Int?
+  sacks              Int?
+  passDeflections    Int?
+  interceptions      Int?
+  forcedFumbles      Int?
 
-  goals      Int?    // soccer/hockey
-  shots      Int?
 
-  hits       Int?    // baseball
-  homeRuns   Int?
+
 }
