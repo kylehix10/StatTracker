@@ -1,7 +1,7 @@
-
 import { Router } from 'express';
+import prisma from '../prisma/client.js';
+
 const router = Router();
-import prisma from '../prisma/client.mjs';
 
 // GET all seasons
 router.get('/', async (req, res) => {
@@ -11,8 +11,10 @@ router.get('/', async (req, res) => {
 
 // POST create a season
 router.post('/', async (req, res) => {
-  const { year, sportId } = req.body;
-  const season = await prisma.season.create({ data: { year, sportId } });
+  const { name, startDate, endDate } = req.body;
+  const season = await prisma.season.create({
+    data: { name, startDate: new Date(startDate), endDate: new Date(endDate) }
+  });
   res.json(season);
 });
 

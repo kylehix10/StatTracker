@@ -1,7 +1,7 @@
 
 import { Router } from 'express';
 const router = Router();
-import prisma from '../prisma/client.mjs';
+import prisma from '../prisma/client.js';
 
 // GET all sports
 router.get('/', async (req, res) => {
