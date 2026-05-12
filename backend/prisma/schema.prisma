@@ -31,7 +31,7 @@ model Team {
   id          String   @id @default(cuid())
   name        String
   town        String
-  type        String
+  level       String
   sport       Sport    @relation(fields: [sportId], references: [id])
   sportId     String
   year        Int
