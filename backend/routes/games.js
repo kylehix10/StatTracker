@@ -39,4 +39,35 @@ router.post('/', async (req, res) => {
   res.json(game);
 });
 
+// PUT update a game
+router.put('/:id', async (req, res) => {
+  const { date, homeTeamId, awayTeamId, seasonId } = req.body;
+  try {
+    const game = await prisma.game.update({
+      where: { id: req.params.id },
+      data: {
+        date: date ? new Date(date) : undefined,
+        homeTeamId,
+        awayTeamId,
+        seasonId
+      }
+    });
+    res.json(game);
+  } catch (error) {
+    console.error(error);
+    res.status(404).json({ error: 'Game not found or could not be updated' });
+  }
+});
+
+// DELETE remove a game
+router.delete('/:id', async (req, res) => {
+  try {
+    await prisma.game.delete({ where: { id: req.params.id } });
+    res.json({ message: 'Game deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(404).json({ error: 'Game not found or could not be deleted' });
+  }
+});
+
 export default router;
