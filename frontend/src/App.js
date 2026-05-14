@@ -1,9 +1,8 @@
-import logo from './logo.svg';
 import './App.css';
-import { Button } from 'bootstrap';
 import Navbar from './components/Navbar';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
+import RecordStat from './pages/RecordStat';
 
 function App() {
   return (
@@ -12,6 +11,7 @@ function App() {
       <Navbar />
       <Routes>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/record-stat/:gameId" element={<RecordStat />} />
       </Routes>
     </BrowserRouter>
     </div>

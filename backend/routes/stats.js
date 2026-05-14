@@ -3,6 +3,34 @@ import { Router } from 'express';
 const router = Router();
 import prisma from '../prisma/client.js';
 
+const statFields = [
+  'completions',
+  'passAttempts',
+  'passingYards',
+  'passingTds',
+  'thrownInterceptions',
+  'carries',
+  'rushingYards',
+  'rushingTouchdowns',
+  'receptions',
+  'receivingYards',
+  'receivingTds',
+  'tackles',
+  'sacks',
+  'passDeflections',
+  'interceptions',
+  'forcedFumbles'
+];
+
+function getStatData(body) {
+  return statFields.reduce((data, field) => {
+    if (body[field] !== undefined) {
+      data[field] = body[field] === null || body[field] === '' ? null : Number(body[field]);
+    }
+    return data;
+  }, {});
+}
+
 // GET stats for a specific game
 router.get('/game/:gameId', async (req, res) => {
   const stats = await prisma.athleteGameStat.findMany({
@@ -23,20 +51,29 @@ router.get('/athlete/:athleteId', async (req, res) => {
 
 // POST log stats for an athlete in a game
 router.post('/', async (req, res) => {
-  const { athleteId, gameId, minutesPlayed, points, assists, rebounds, goals, shots, hits, homeRuns } = req.body;
-  const stat = await prisma.athleteGameStat.create({
-    data: { athleteId, gameId, minutesPlayed, points, assists, rebounds, goals, shots, hits, homeRuns }
-  });
-  res.json(stat);
+  const { athleteId, gameId } = req.body;
+
+  if (!athleteId || !gameId) {
+    return res.status(400).json({ error: 'Required fields: athleteId, gameId' });
+  }
+
+  try {
+    const stat = await prisma.athleteGameStat.create({
+      data: { athleteId, gameId, ...getStatData(req.body) }
+    });
+    res.status(201).json(stat);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Unable to create stat entry' });
+  }
 });
 
 // PUT update a stat entry
 router.put('/:id', async (req, res) => {
-  const { minutesPlayed, points, assists, rebounds, goals, shots, hits, homeRuns } = req.body;
   try {
     const stat = await prisma.athleteGameStat.update({
       where: { id: req.params.id },
-      data: { minutesPlayed, points, assists, rebounds, goals, shots, hits, homeRuns }
+      data: getStatData(req.body)
     });
     res.json(stat);
   } catch (error) {

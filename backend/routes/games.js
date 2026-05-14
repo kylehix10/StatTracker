@@ -33,10 +33,32 @@ router.get('/:id', async (req, res) => {
 // POST create a game
 router.post('/', async (req, res) => {
   const { date, homeTeamId, awayTeamId, seasonId } = req.body;
-  const game = await prisma.game.create({
-    data: { date: new Date(date), homeTeamId, awayTeamId, seasonId }
-  });
-  res.json(game);
+
+  if (!date || !homeTeamId || !awayTeamId || !seasonId) {
+    return res.status(400).json({
+      error: 'Required fields: date, homeTeamId, awayTeamId, seasonId'
+    });
+  }
+
+  if (homeTeamId === awayTeamId) {
+    return res.status(400).json({ error: 'Home and away teams must be different' });
+  }
+
+  try {
+    const game = await prisma.game.create({
+      data: { date: new Date(date), homeTeamId, awayTeamId, seasonId },
+      include: {
+        homeTeam: true,
+        awayTeam: true,
+        season: true,
+        athleteStats: { include: { athlete: true } }
+      }
+    });
+    res.status(201).json(game);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Unable to create game' });
+  }
 });
 
 // PUT update a game

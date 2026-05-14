@@ -24,6 +24,51 @@
   color: white;
 }
 
+.record-stat-page {
+  padding: 2rem;
+  text-align: left;
+}
+
+.record-stat-header {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.record-stat-header h1 {
+  font-size: 1.75rem;
+  margin: 0;
+}
+
+.record-stat-header p {
+  color: #5f6b62;
+  margin: 0.25rem 0 0;
+}
+
+.stat-table-wrap {
+  overflow-x: auto;
+}
+
+.stat-table {
+  min-width: 1200px;
+}
+
+.stat-table th,
+.stat-table td {
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.stat-table input {
+  border: 1px solid #cbd5d0;
+  border-radius: 4px;
+  max-width: 76px;
+  padding: 0.35rem 0.45rem;
+  width: 100%;
+}
+
 .App-link {
   color: #61dafb;
 }

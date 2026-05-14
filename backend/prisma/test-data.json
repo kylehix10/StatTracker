@@ -1,0 +1,57 @@
+{
+  "user": {
+    "firstName": "Test",
+    "lastName": "Coach",
+    "email": "coach@example.com",
+    "password": "password"
+  },
+  "sport": {
+    "name": "Football"
+  },
+  "seasons": [
+    {
+      "key": "season-2026",
+      "name": "2026 Season",
+      "startDate": "2026-08-01",
+      "endDate": "2026-12-31"
+    }
+  ],
+  "teams": [
+    {
+      "key": "home-test-team",
+      "name": "StatTracker Home",
+      "town": "Columbia",
+      "level": "Varsity",
+      "year": 2026
+    },
+    {
+      "key": "away-test-team",
+      "name": "StatTracker Away",
+      "town": "Lexington",
+      "level": "Varsity",
+      "year": 2026
+    }
+  ],
+  "athletes": [
+    {
+      "firstName": "Jordan",
+      "lastName": "Miles",
+      "teamKey": "home-test-team"
+    },
+    {
+      "firstName": "Chris",
+      "lastName": "Parker",
+      "teamKey": "home-test-team"
+    },
+    {
+      "firstName": "Taylor",
+      "lastName": "Reed",
+      "teamKey": "away-test-team"
+    },
+    {
+      "firstName": "Morgan",
+      "lastName": "Hayes",
+      "teamKey": "away-test-team"
+    }
+  ]
+}
