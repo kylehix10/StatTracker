@@ -14,19 +14,201 @@
 }
 
 .Dashboard {
-  background-color: #e0e0e0;
+  background-color: #eef2ef;
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  padding: 2rem;
+  text-align: left;
+}
+
+.dashboard-content {
+  margin: 0 auto;
+  max-width: 1120px;
+  width: 100%;
+}
+
+.dashboard-header {
   align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-header h1 {
+  color: #26352b;
+  font-size: 2rem;
+  margin: 0;
+}
+
+.dashboard-header p {
+  color: #5f6b62;
+  margin: 0.25rem 0 0;
+}
+
+.dashboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.dashboard-actions .btn {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.45rem;
+}
+
+.team-card-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.team-card {
+  border-color: #d9e0dc;
+  border-radius: 8px;
+  box-shadow: 0 8px 22px rgba(47, 62, 51, 0.08);
+  cursor: pointer;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.team-card:hover,
+.team-card:focus {
+  border-color: #71977c;
+  box-shadow: 0 12px 26px rgba(47, 62, 51, 0.14);
+  outline: none;
+  transform: translateY(-2px);
+}
+
+.no-teams-message {
+  background: #ffffff;
+  border: 1px solid #d9e0dc;
+  border-radius: 8px;
+  color: #4b5750;
+  margin: 0;
+  padding: 1.25rem;
+}
+
+.login-page {
+  align-items: center;
+  background: #eef2ef;
+  display: flex;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  min-height: calc(100vh - 56px);
+  padding: 2rem;
+  text-align: left;
+}
+
+.login-panel {
+  background: #ffffff;
+  border: 1px solid #d9e0dc;
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(47, 62, 51, 0.12);
+  max-width: 480px;
+  padding: 2rem;
+  width: 100%;
+}
+
+.login-heading {
+  margin-bottom: 1.5rem;
+}
+
+.login-heading h1 {
+  color: #26352b;
+  font-size: 2rem;
+  margin: 0;
+}
+
+.login-heading p {
+  color: #5f6b62;
+  margin: 0.35rem 0 0;
+}
+
+.login-toggle {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 1.25rem;
+}
+
+.login-name-row {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr 1fr;
+}
+
+.login-submit {
+  width: 100%;
 }
 
 .record-stat-page {
   padding: 2rem;
   text-align: left;
+}
+
+.season-page {
+  background: #eef2ef;
+  min-height: 100vh;
+  padding: 2rem;
+  text-align: left;
+}
+
+.season-header {
+  margin: 0 auto 1.5rem;
+  max-width: 1120px;
+}
+
+.season-header h1 {
+  color: #26352b;
+  font-size: 2rem;
+  margin: 0;
+}
+
+.season-header p {
+  color: #5f6b62;
+  margin: 0.25rem 0 0;
+}
+
+.season-page .tab-content,
+.season-page .nav-tabs {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 1120px;
+}
+
+.season-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 auto 1rem;
+  max-width: 1120px;
+}
+
+.season-actions .btn {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.45rem;
+}
+
+.season-game-row {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.season-game-row span {
+  color: #5f6b62;
+  display: block;
+  font-size: 0.9rem;
+}
+
+.empty-state {
+  background: #ffffff;
+  border: 1px solid #d9e0dc;
+  border-radius: 8px;
+  color: #4b5750;
+  margin: 0;
+  padding: 1.25rem;
 }
 
 .record-stat-header {

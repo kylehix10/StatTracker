@@ -6,6 +6,7 @@ const BASE = 'http://localhost:5000/api';
 export const getUsers = () => axios.get(`${BASE}/users`);
 export const getUser = (id) => axios.get(`${BASE}/users/${id}`);
 export const createUser = (data) => axios.post(`${BASE}/users`, data);
+export const loginUser = (data) => axios.post(`${BASE}/users/login`, data);
 export const updateUser = (id, data) => axios.put(`${BASE}/users/${id}`, data);
 export const deleteUser = (id) => axios.delete(`${BASE}/users/${id}`);
 
