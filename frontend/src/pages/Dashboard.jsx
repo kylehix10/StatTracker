@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Card, Form, Modal } from 'react-bootstrap';
-import { createTeam, getSports, getTeams } from '../api';
+import { Button, Card, Form, Modal, Toast, ToastContainer } from 'react-bootstrap';
+import { createTeam, deleteTeam, getSports, getTeams } from '../api';
 
 function getLoggedInUser() {
   const savedUser = localStorage.getItem('statTrackerUser');
@@ -21,7 +21,9 @@ function Dashboard() {
     sportId: '',
     year: new Date().getFullYear()
   });
+  const [teamToDelete, setTeamToDelete] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [error, setError] = useState('');
 
@@ -98,18 +100,47 @@ function Dashboard() {
     }
   };
 
+  const handleRequestDeleteTeam = (event, team) => {
+    event.stopPropagation();
+    setError('');
+    setTeamToDelete(team);
+  };
+
+  const handleCancelDeleteTeam = () => {
+    if (!deleting) {
+      setTeamToDelete(null);
+    }
+  };
+
+  const handleDeleteTeam = async () => {
+    if (!teamToDelete) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      setError('');
+      await deleteTeam(teamToDelete.id);
+      setUserTeams(current => current.filter(team => team.id !== teamToDelete.id));
+      setTeamToDelete(null);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Unable to delete team');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <main className="Dashboard">
       <section className="dashboard-content">
         <div className="dashboard-header">
           <div>
-            <h1>Dashboard</h1>
-            {currentUser && <p>{currentUser.firstName} {currentUser.lastName}</p>}
+            <h1>Welcome {currentUser.firstName}</h1>
           </div>
 
           <div className="dashboard-actions">
             <Button aria-label="Create team" onClick={handleOpenCreateTeam}>
-              <i className="bi-plus-circle-fill"></i>
+              <i className="bi bi-plus-circle-fill"></i>
               <span>Create Team</span>
             </Button>
           </div>
@@ -132,6 +163,18 @@ function Dashboard() {
                   }
                 }}
               >
+                <Button
+                  aria-label={`Delete ${team.name}`}
+                  className="team-card-delete"
+                  onClick={(event) => handleRequestDeleteTeam(event, team)}
+                  onKeyDown={(event) => event.stopPropagation()}
+                  size="sm"
+                  type="button"
+                  variant="link"
+                  
+                >
+                  <i aria-hidden="true" className="bi bi-x-lg"></i>
+                </Button>
                 <Card.Body>
                   <Card.Title>{team.name}</Card.Title>
                   <Card.Subtitle className="mb-2 text-muted">
@@ -149,6 +192,35 @@ function Dashboard() {
           </div>
         )}
       </section>
+
+      <ToastContainer className="dashboard-toast-container" position="top-end">
+        <Toast show={Boolean(teamToDelete)} onClose={handleCancelDeleteTeam} bg="light">
+          <Toast.Header closeButton={!deleting}>
+            <strong className="me-auto">Are you sure you want to delete?</strong>
+          </Toast.Header>
+          <Toast.Body>
+            {teamToDelete && <p className="mb-3">{teamToDelete.name}</p>}
+            <div className="delete-toast-actions">
+              <Button
+                disabled={deleting}
+                onClick={handleDeleteTeam}
+                size="sm"
+                variant="danger"
+              >
+                {deleting ? 'Deleting...' : 'Yes'}
+              </Button>
+              <Button
+                disabled={deleting}
+                onClick={handleCancelDeleteTeam}
+                size="sm"
+                variant="secondary"
+              >
+                No
+              </Button>
+            </div>
+          </Toast.Body>
+        </Toast>
+      </ToastContainer>
 
       <Modal show={showCreateTeam} onHide={() => setShowCreateTeam(false)} centered>
         <Form onSubmit={handleCreateTeam}>

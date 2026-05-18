@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Table } from 'react-bootstrap';
-import { useParams } from 'react-router-dom';
+import { Button, Table, Toast, ToastContainer } from 'react-bootstrap';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { createStat, getGame, getStatsByGame, getTeam, updateStat } from '../api';
 
 const STAT_COLUMNS = [
@@ -28,11 +28,13 @@ function emptyStats() {
 
 function RecordStat() {
   const { gameId } = useParams();
+  const location = useLocation();
   const [game, setGame] = useState(null);
   const [athletes, setAthletes] = useState([]);
   const [statsByAthlete, setStatsByAthlete] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showSaveToast, setShowSaveToast] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -90,6 +92,8 @@ function RecordStat() {
     return `${game.homeTeam?.name || 'Home'} vs ${game.awayTeam?.name || 'Away'}`;
   }, [game]);
 
+  const seasonTeamId = location.state?.teamId || game?.homeTeamId;
+
   const handleStatChange = (athleteId, statKey, value) => {
     setStatsByAthlete(current => ({
       ...current,
@@ -127,6 +131,7 @@ function RecordStat() {
           ? updateStat(row.values.id, payload)
           : createStat(payload);
       }));
+      setShowSaveToast(true);
     } catch (err) {
       setError('Unable to save stats');
     } finally {
@@ -150,8 +155,14 @@ function RecordStat() {
 
       {error && <p className="text-danger">{error}</p>}
 
+      {seasonTeamId && (
+        <Link className="record-stat-back-link" to={`/season/${seasonTeamId}`}>
+          Back to season
+        </Link>
+      )}
+
       <div className="stat-table-wrap">
-        <Table striped bordered hover responsive className="stat-table">
+        <Table striped bordered hover className="stat-table">
           <thead>
             <tr>
               <th>Athlete</th>
@@ -185,6 +196,23 @@ function RecordStat() {
           </tbody>
         </Table>
       </div>
+
+      <ToastContainer className="dashboard-toast-container" position="top-end">
+        <Toast
+          autohide
+          bg="success"
+          delay={2500}
+          onClose={() => setShowSaveToast(false)}
+          show={showSaveToast}
+        >
+          <Toast.Header>
+            <strong className="me-auto">Stats saved</strong>
+          </Toast.Header>
+          <Toast.Body className="text-white">
+            Stat changes were saved successfully.
+          </Toast.Body>
+        </Toast>
+      </ToastContainer>
     </main>
   );
 }

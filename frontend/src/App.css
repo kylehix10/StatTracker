@@ -69,7 +69,12 @@
   border-radius: 8px;
   box-shadow: 0 8px 22px rgba(47, 62, 51, 0.08);
   cursor: pointer;
+  position: relative;
   transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.team-card .card-body {
+  padding-right: 2.75rem;
 }
 
 .team-card:hover,
@@ -78,6 +83,43 @@
   box-shadow: 0 12px 26px rgba(47, 62, 51, 0.14);
   outline: none;
   transform: translateY(-2px);
+}
+
+.team-card .team-card-delete.btn {
+  align-items: center;
+  background-color: transparent;
+  border: 0;
+  color: #dc3545;
+  display: inline-flex;
+  font-size: 1.25rem;
+  height: 2rem;
+  justify-content: center;
+  padding: 0;
+  position: absolute;
+  right: 0.65rem;
+  text-decoration: none;
+  top: 0.65rem;
+  width: 2rem;
+  z-index: 1;
+}
+
+.team-card .team-card-delete.btn:hover,
+.team-card .team-card-delete.btn:focus {
+  background-color: transparent;
+  color: #b42318;
+  text-decoration: none;
+}
+
+.dashboard-toast-container {
+  padding: 1rem;
+  position: fixed;
+  z-index: 1080;
+}
+
+.delete-toast-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
 }
 
 .no-teams-message {
@@ -191,9 +233,25 @@
 
 .season-game-row {
   align-items: center;
+  cursor: pointer;
   display: flex;
   gap: 1rem;
   justify-content: space-between;
+}
+
+.season-game-row > div:nth-of-type(2) {
+  flex: 1;
+  text-align: right;
+}
+
+.season-remove-button {
+  flex: 0 0 auto;
+}
+
+.season-game-row:focus {
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+  outline: none;
+  z-index: 1;
 }
 
 .season-game-row span {
@@ -234,7 +292,7 @@
 }
 
 .stat-table {
-  min-width: 1200px;
+  min-width: 1000px;
 }
 
 .stat-table th,
@@ -243,12 +301,14 @@
   white-space: nowrap;
 }
 
-.stat-table input {
+.stat-table input[type="number"] {
   border: 1px solid #cbd5d0;
   border-radius: 4px;
-  max-width: 76px;
+  box-sizing: border-box;
+  height: 2.25rem;
   padding: 0.35rem 0.45rem;
-  width: 100%;
+  text-align: center;
+  width: 4.75rem;
 }
 
 .App-link {

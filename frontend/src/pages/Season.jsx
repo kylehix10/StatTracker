@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, Form, ListGroup, Modal, Tab, Table, Tabs } from 'react-bootstrap';
-import { useParams } from 'react-router-dom';
-import { addAthleteToTeam, createAthlete, createGame, getGames, getSeasons, getStatsByGame, getTeam, getTeams } from '../api';
+import { Button, Form, ListGroup, Modal, Tab, Table, Tabs, Toast, ToastContainer } from 'react-bootstrap';
+import { useNavigate, useParams } from 'react-router-dom';
+import { addAthleteToTeam, createAthlete, createGame, deleteAthlete, deleteGame, getGames, getSeasons, getStatsByGame, getTeam, getTeams } from '../api';
 
 const STAT_COLUMNS = [
   { key: 'completions', label: 'Comp' },
@@ -24,6 +24,7 @@ const STAT_COLUMNS = [
 
 function Season() {
   const { teamId } = useParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('games');
   const [team, setTeam] = useState(null);
   const [teams, setTeams] = useState([]);
@@ -45,6 +46,8 @@ function Season() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [removingId, setRemovingId] = useState('');
+  const [pendingRemoval, setPendingRemoval] = useState(null);
   const [error, setError] = useState('');
 
   const loadTeamSeason = useCallback(async () => {
@@ -180,6 +183,53 @@ function Season() {
     }
   };
 
+  const handleRequestRemoveGame = (event, game) => {
+    event.stopPropagation();
+    setError('');
+    setPendingRemoval({
+      id: game.id,
+      type: 'game',
+      label: `${game.homeTeam?.name || game.homeTeamId} vs ${game.awayTeam?.name || game.awayTeamId}`
+    });
+  };
+
+  const handleRequestRemoveAthlete = (athlete) => {
+    setError('');
+    setPendingRemoval({
+      id: athlete.id,
+      type: 'player',
+      label: `${athlete.firstName} ${athlete.lastName}`
+    });
+  };
+
+  const handleCancelRemoval = () => {
+    if (!removingId) {
+      setPendingRemoval(null);
+    }
+  };
+
+  const handleConfirmRemoval = async () => {
+    if (!pendingRemoval) {
+      return;
+    }
+
+    try {
+      setRemovingId(pendingRemoval.id);
+      setError('');
+      if (pendingRemoval.type === 'game') {
+        await deleteGame(pendingRemoval.id);
+      } else {
+        await deleteAthlete(pendingRemoval.id);
+      }
+      setPendingRemoval(null);
+      await loadTeamSeason();
+    } catch (err) {
+      setError(err.response?.data?.error || `Unable to remove ${pendingRemoval.type}`);
+    } finally {
+      setRemovingId('');
+    }
+  };
+
   if (loading) return <p className="season-page">Loading season...</p>;
   if (error && !team) return <p className="season-page text-danger">{error}</p>;
   if (!team) return <p className="season-page">Team not found</p>;
@@ -194,12 +244,12 @@ function Season() {
       <div className="season-actions">
         {activeTab === 'games' ? (
           <Button onClick={() => setShowCreateGame(true)}>
-            <i className="bi-plus-circle-fill"></i>
+            <i className="bi bi-plus-circle-fill"></i>
             <span>Create Game</span>
           </Button>
         ) : (
           <Button onClick={() => setShowCreateAthlete(true)}>
-            <i className="bi-plus-circle-fill"></i>
+            <i className="bi bi-plus-circle-fill"></i>
             <span>Create Athlete</span>
           </Button>
         )}
@@ -212,7 +262,20 @@ function Season() {
           ) : (
             <ListGroup>
               {games.map(game => (
-                <ListGroup.Item key={game.id} className="season-game-row">
+                <ListGroup.Item
+                  key={game.id}
+                  action
+                  as="div"
+                  className="season-game-row"
+                  onClick={() => navigate(`/record-stat/${game.id}`, { state: { teamId } })}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      navigate(`/record-stat/${game.id}`, { state: { teamId } });
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                >
                   <div>
                     <strong>{new Date(game.date).toLocaleDateString()}</strong>
                     <span>{game.season?.name}</span>
@@ -220,6 +283,18 @@ function Season() {
                   <div>
                     {game.homeTeam?.name || game.homeTeamId} vs {game.awayTeam?.name || game.awayTeamId}
                   </div>
+                  <Button
+                    aria-label="Remove game"
+                    className="season-remove-button"
+                    disabled={removingId === game.id}
+                    onClick={(event) => handleRequestRemoveGame(event, game)}
+                    onKeyDown={(event) => event.stopPropagation()}
+                    size="sm"
+                    type="button"
+                    variant="outline-danger"
+                  >
+                    Remove
+                  </Button>
                 </ListGroup.Item>
               ))}
             </ListGroup>
@@ -238,6 +313,7 @@ function Season() {
                     {STAT_COLUMNS.map(column => (
                       <th key={column.key}>{column.label}</th>
                     ))}
+                    <th>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -249,6 +325,18 @@ function Season() {
                         {STAT_COLUMNS.map(column => (
                           <td key={column.key}>{totals[column.key] || 0}</td>
                         ))}
+                        <td>
+                          <Button
+                            aria-label={`Remove ${athlete.firstName} ${athlete.lastName}`}
+                            disabled={removingId === athlete.id}
+                            onClick={() => handleRequestRemoveAthlete(athlete)}
+                            size="sm"
+                            type="button"
+                            variant="outline-danger"
+                          >
+                            Remove
+                          </Button>
+                        </td>
                       </tr>
                     );
                   })}
@@ -258,6 +346,35 @@ function Season() {
           )}
         </Tab>
       </Tabs>
+
+      <ToastContainer className="dashboard-toast-container" position="top-end">
+        <Toast show={Boolean(pendingRemoval)} onClose={handleCancelRemoval} bg="light">
+          <Toast.Header closeButton={!removingId}>
+            <strong className="me-auto">Are you sure you want to delete?</strong>
+          </Toast.Header>
+          <Toast.Body>
+            {pendingRemoval && <p className="mb-3">{pendingRemoval.label}</p>}
+            <div className="delete-toast-actions">
+              <Button
+                disabled={Boolean(removingId)}
+                onClick={handleConfirmRemoval}
+                size="sm"
+                variant="danger"
+              >
+                {removingId ? 'Deleting...' : 'Yes'}
+              </Button>
+              <Button
+                disabled={Boolean(removingId)}
+                onClick={handleCancelRemoval}
+                size="sm"
+                variant="secondary"
+              >
+                No
+              </Button>
+            </div>
+          </Toast.Body>
+        </Toast>
+      </ToastContainer>
 
       <Modal show={showCreateGame} onHide={() => setShowCreateGame(false)} centered>
         <Form onSubmit={handleCreateGame}>

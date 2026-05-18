@@ -20,9 +20,42 @@ router.get('/:id', async (req, res) => {
 // POST create a user
 router.post('/', async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
-  const user = await prisma.user.create({
-    data: { firstName, lastName, email, password }
+
+  if (!firstName || !lastName || !email || !password) {
+    return res.status(400).json({ error: 'Required fields: firstName, lastName, email, password' });
+  }
+
+  try {
+    const user = await prisma.user.create({
+      data: { firstName, lastName, email, password }
+    });
+    res.status(201).json(user);
+  } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(409).json({ error: 'An account already exists for this email' });
+    }
+    console.error(error);
+    res.status(500).json({ error: 'Unable to create user' });
+  }
+});
+
+// POST log in a user
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Required fields: email, password' });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+    include: { Team: true }
   });
+
+  if (!user || user.password !== password) {
+    return res.status(401).json({ error: 'Invalid email or password' });
+  }
+
   res.json(user);
 });
 

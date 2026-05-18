@@ -51,7 +51,11 @@ router.put('/:id', async (req, res) => {
 // DELETE remove an athlete
 router.delete('/:id', async (req, res) => {
   try {
-    await prisma.athlete.delete({ where: { id: req.params.id } });
+    await prisma.$transaction([
+      prisma.athleteGameStat.deleteMany({ where: { athleteId: req.params.id } }),
+      prisma.athleteTeam.deleteMany({ where: { athleteId: req.params.id } }),
+      prisma.athlete.delete({ where: { id: req.params.id } })
+    ]);
     res.json({ message: 'Athlete deleted successfully' });
   } catch (error) {
     console.error(error);
