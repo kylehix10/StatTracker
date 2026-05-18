@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { createGame, getGames, getSeasons, getTeam, getTeams } from '../api';
+import { createGame, getGames, getSeasons, getTeam } from '../api';
 
 function Games({ teamId }) {
   const [team, setTeam] = useState(null);
-  const [teams, setTeams] = useState([]);
   const [seasons, setSeasons] = useState([]);
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,7 +11,7 @@ function Games({ teamId }) {
   const [form, setForm] = useState({
     date: new Date().toISOString().slice(0, 10),
     seasonId: '',
-    opponentTeamId: '',
+    opponentName: '',
     isHome: true
   });
 
@@ -28,9 +27,8 @@ function Games({ teamId }) {
         setLoading(true);
         setError(null);
 
-        const [teamResponse, teamsResponse, gamesResponse, seasonsResponse] = await Promise.all([
+        const [teamResponse, gamesResponse, seasonsResponse] = await Promise.all([
           getTeam(teamId),
-          getTeams(),
           getGames(),
           getSeasons()
         ]);
@@ -38,14 +36,12 @@ function Games({ teamId }) {
         const teamGames = gamesResponse.data.filter(g => g.homeTeamId === teamId || g.awayTeamId === teamId);
 
         setTeam(teamResponse.data);
-        setTeams(teamsResponse.data.filter(t => t.id !== teamId));
         setGames(teamGames);
         setSeasons(seasonsResponse.data);
 
         setForm(current => ({
           ...current,
-          seasonId: current.seasonId || seasonsResponse.data[0]?.id || '',
-          opponentTeamId: current.opponentTeamId || teamsResponse.data.find(t => t.id !== teamId)?.id || ''
+          seasonId: current.seasonId || seasonsResponse.data[0]?.id || ''
         }));
       } catch (err) {
         setError('Failed to load games data');
@@ -68,7 +64,7 @@ function Games({ teamId }) {
   const handleCreateGame = async (event) => {
     event.preventDefault();
 
-    if (!form.date || !form.seasonId || !form.opponentTeamId) {
+    if (!form.date || !form.seasonId || !form.opponentName.trim()) {
       setError('Date, season, and opponent are required');
       return;
     }
@@ -76,8 +72,9 @@ function Games({ teamId }) {
     const gameData = {
       date: form.date,
       seasonId: form.seasonId,
-      homeTeamId: form.isHome ? teamId : form.opponentTeamId,
-      awayTeamId: form.isHome ? form.opponentTeamId : teamId
+      homeTeamId: form.isHome ? teamId : null,
+      awayTeamId: form.isHome ? null : teamId,
+      opponentName: form.opponentName
     };
 
     try {
@@ -85,11 +82,21 @@ function Games({ teamId }) {
       setError(null);
       const response = await createGame(gameData);
       setGames(current => [...current, response.data]);
+      setForm(current => ({ ...current, opponentName: '' }));
     } catch (err) {
       setError('Failed to create game');
     } finally {
       setSaving(false);
     }
+  };
+
+  const getGameTeamName = (game, side) => {
+    const teamName = game[`${side}Team`]?.name;
+    const teamIdForSide = game[`${side}TeamId`];
+
+    if (teamName) return teamName;
+    if (!teamIdForSide) return game.opponentName || 'Opponent';
+    return teamIdForSide;
   };
 
   if (loading) return <p>Loading...</p>;
@@ -124,12 +131,13 @@ function Games({ teamId }) {
 
         <label>
           Opponent
-          <select name="opponentTeamId" value={form.opponentTeamId} onChange={handleChange} required>
-            <option value="">Select an opponent</option>
-            {teams.map(opponent => (
-              <option key={opponent.id} value={opponent.id}>{opponent.name}</option>
-            ))}
-          </select>
+          <input
+            type="text"
+            name="opponentName"
+            value={form.opponentName}
+            onChange={handleChange}
+            required
+          />
         </label>
 
         <label>
@@ -150,7 +158,7 @@ function Games({ teamId }) {
       <ul>
         {games.map(game => (
           <li key={game.id}>
-            {new Date(game.date).toLocaleDateString()} - {game.homeTeam?.name || game.homeTeamId} vs {game.awayTeam?.name || game.awayTeamId}
+            {new Date(game.date).toLocaleDateString()} - {getGameTeamName(game, 'home')} vs {getGameTeamName(game, 'away')}
           </li>
         ))}
       </ul>

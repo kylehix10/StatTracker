@@ -47,17 +47,17 @@ function RecordStat() {
         const currentGame = gameResponse.data;
 
         const [homeTeamResponse, awayTeamResponse, statsResponse] = await Promise.all([
-          getTeam(currentGame.homeTeamId),
-          getTeam(currentGame.awayTeamId),
+          currentGame.homeTeamId ? getTeam(currentGame.homeTeamId) : Promise.resolve({ data: null }),
+          currentGame.awayTeamId ? getTeam(currentGame.awayTeamId) : Promise.resolve({ data: null }),
           getStatsByGame(gameId)
         ]);
 
         const rosterRows = [
-          ...homeTeamResponse.data.roster.map(row => ({
+          ...(homeTeamResponse.data?.roster || []).map(row => ({
             ...row.athlete,
             teamName: homeTeamResponse.data.name
           })),
-          ...awayTeamResponse.data.roster.map(row => ({
+          ...(awayTeamResponse.data?.roster || []).map(row => ({
             ...row.athlete,
             teamName: awayTeamResponse.data.name
           }))
@@ -89,10 +89,12 @@ function RecordStat() {
 
   const gameTitle = useMemo(() => {
     if (!game) return 'Record Stats';
-    return `${game.homeTeam?.name || 'Home'} vs ${game.awayTeam?.name || 'Away'}`;
+    const homeName = game.homeTeam?.name || (!game.homeTeamId ? game.opponentName : null) || 'Home';
+    const awayName = game.awayTeam?.name || (!game.awayTeamId ? game.opponentName : null) || 'Away';
+    return `${homeName} vs ${awayName}`;
   }, [game]);
 
-  const seasonTeamId = location.state?.teamId || game?.homeTeamId;
+  const seasonTeamId = location.state?.teamId || game?.homeTeamId || game?.awayTeamId;
 
   const handleStatChange = (athleteId, statKey, value) => {
     setStatsByAthlete(current => ({

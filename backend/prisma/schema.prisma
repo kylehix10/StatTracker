@@ -64,10 +64,11 @@ model Game {
   date         DateTime
   seasonId     String
   season       Season   @relation(fields: [seasonId], references: [id])
-  homeTeamId   String
-  awayTeamId   String
-  homeTeam     Team     @relation("HomeTeam", fields: [homeTeamId], references: [id])
-  awayTeam     Team     @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  homeTeamId   String?
+  awayTeamId   String?
+  opponentName String?
+  homeTeam     Team?    @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam     Team?    @relation("AwayTeam", fields: [awayTeamId], references: [id])
   athleteStats AthleteGameStat[]
 }
 

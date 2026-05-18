@@ -32,21 +32,28 @@ router.get('/:id', async (req, res) => {
 
 // POST create a game
 router.post('/', async (req, res) => {
-  const { date, homeTeamId, awayTeamId, seasonId } = req.body;
+  const { date, homeTeamId, awayTeamId, opponentName, seasonId } = req.body;
+  const cleanedOpponentName = opponentName?.trim();
 
-  if (!date || !homeTeamId || !awayTeamId || !seasonId) {
+  if (!date || !seasonId || (!homeTeamId && !awayTeamId) || (!cleanedOpponentName && (!homeTeamId || !awayTeamId))) {
     return res.status(400).json({
-      error: 'Required fields: date, homeTeamId, awayTeamId, seasonId'
+      error: 'Required fields: date, seasonId, one team, and opponentName'
     });
   }
 
-  if (homeTeamId === awayTeamId) {
+  if (homeTeamId && awayTeamId && homeTeamId === awayTeamId) {
     return res.status(400).json({ error: 'Home and away teams must be different' });
   }
 
   try {
     const game = await prisma.game.create({
-      data: { date: new Date(date), homeTeamId, awayTeamId, seasonId },
+      data: {
+        date: new Date(date),
+        homeTeamId: homeTeamId || null,
+        awayTeamId: awayTeamId || null,
+        opponentName: cleanedOpponentName || null,
+        seasonId
+      },
       include: {
         homeTeam: true,
         awayTeam: true,
@@ -63,7 +70,7 @@ router.post('/', async (req, res) => {
 
 // PUT update a game
 router.put('/:id', async (req, res) => {
-  const { date, homeTeamId, awayTeamId, seasonId } = req.body;
+  const { date, homeTeamId, awayTeamId, opponentName, seasonId } = req.body;
   try {
     const game = await prisma.game.update({
       where: { id: req.params.id },
@@ -71,6 +78,7 @@ router.put('/:id', async (req, res) => {
         date: date ? new Date(date) : undefined,
         homeTeamId,
         awayTeamId,
+        opponentName: opponentName?.trim(),
         seasonId
       }
     });

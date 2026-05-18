@@ -50,12 +50,14 @@
   flex-wrap: wrap;
   gap: 0.75rem;
   justify-content: flex-end;
+  
 }
 
 .dashboard-actions .btn {
   align-items: center;
   display: inline-flex;
   gap: 0.45rem;
+  
 }
 
 .team-card-grid {

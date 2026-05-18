@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, Form, ListGroup, Modal, Tab, Table, Tabs, Toast, ToastContainer } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
-import { addAthleteToTeam, createAthlete, createGame, deleteAthlete, deleteGame, getGames, getSeasons, getStatsByGame, getTeam, getTeams } from '../api';
+import { addAthleteToTeam, createAthlete, createGame, deleteAthlete, deleteGame, getGames, getSeasons, getStatsByGame, getTeam } from '../api';
 
 const STAT_COLUMNS = [
   { key: 'completions', label: 'Comp' },
@@ -27,7 +27,6 @@ function Season() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('games');
   const [team, setTeam] = useState(null);
-  const [teams, setTeams] = useState([]);
   const [seasons, setSeasons] = useState([]);
   const [games, setGames] = useState([]);
   const [statTotalsByAthlete, setStatTotalsByAthlete] = useState({});
@@ -36,7 +35,7 @@ function Season() {
   const [gameForm, setGameForm] = useState({
     date: new Date().toISOString().slice(0, 10),
     seasonId: '',
-    opponentTeamId: '',
+    opponentName: '',
     isHome: true
   });
   const [athleteForm, setAthleteForm] = useState({
@@ -55,14 +54,12 @@ function Season() {
       setLoading(true);
       setError('');
 
-      const [teamResponse, gamesResponse, teamsResponse, seasonsResponse] = await Promise.all([
+      const [teamResponse, gamesResponse, seasonsResponse] = await Promise.all([
         getTeam(teamId),
         getGames(),
-        getTeams(),
         getSeasons()
       ]);
 
-      const opponents = teamsResponse.data.filter(nextTeam => nextTeam.id !== teamId);
       const teamGames = gamesResponse.data.filter(game => (
         game.homeTeamId === teamId || game.awayTeamId === teamId
       ));
@@ -86,14 +83,12 @@ function Season() {
       });
 
       setTeam(teamResponse.data);
-      setTeams(opponents);
       setSeasons(seasonsResponse.data);
       setGames(teamGames);
       setStatTotalsByAthlete(totals);
       setGameForm(current => ({
         ...current,
-        seasonId: current.seasonId || seasonsResponse.data[0]?.id || '',
-        opponentTeamId: current.opponentTeamId || opponents[0]?.id || ''
+        seasonId: current.seasonId || seasonsResponse.data[0]?.id || ''
       }));
     } catch (err) {
       setError('Unable to load season');
@@ -109,6 +104,15 @@ function Season() {
   const roster = useMemo(() => {
     return team?.roster?.map(row => row.athlete) || [];
   }, [team]);
+
+  const getGameTeamName = (game, side) => {
+    const teamName = game[`${side}Team`]?.name;
+    const teamIdForSide = game[`${side}TeamId`];
+
+    if (teamName) return teamName;
+    if (!teamIdForSide) return game.opponentName || 'Opponent';
+    return teamIdForSide;
+  };
 
   const handleGameChange = (event) => {
     const { name, value, type, checked } = event.target;
@@ -126,7 +130,7 @@ function Season() {
   const handleCreateGame = async (event) => {
     event.preventDefault();
 
-    if (!gameForm.date || !gameForm.seasonId || !gameForm.opponentTeamId) {
+    if (!gameForm.date || !gameForm.seasonId || !gameForm.opponentName.trim()) {
       setError('Date, season, and opponent are required');
       return;
     }
@@ -137,10 +141,15 @@ function Season() {
       await createGame({
         date: gameForm.date,
         seasonId: gameForm.seasonId,
-        homeTeamId: gameForm.isHome ? teamId : gameForm.opponentTeamId,
-        awayTeamId: gameForm.isHome ? gameForm.opponentTeamId : teamId
+        homeTeamId: gameForm.isHome ? teamId : null,
+        awayTeamId: gameForm.isHome ? null : teamId,
+        opponentName: gameForm.opponentName
       });
       setShowCreateGame(false);
+      setGameForm(current => ({
+        ...current,
+        opponentName: ''
+      }));
       await loadTeamSeason();
     } catch (err) {
       setError(err.response?.data?.error || 'Unable to create game');
@@ -189,7 +198,7 @@ function Season() {
     setPendingRemoval({
       id: game.id,
       type: 'game',
-      label: `${game.homeTeam?.name || game.homeTeamId} vs ${game.awayTeam?.name || game.awayTeamId}`
+      label: `${getGameTeamName(game, 'home')} vs ${getGameTeamName(game, 'away')}`
     });
   };
 
@@ -281,7 +290,7 @@ function Season() {
                     <span>{game.season?.name}</span>
                   </div>
                   <div>
-                    {game.homeTeam?.name || game.homeTeamId} vs {game.awayTeam?.name || game.awayTeamId}
+                    {getGameTeamName(game, 'home')} vs {getGameTeamName(game, 'away')}
                   </div>
                   <Button
                     aria-label="Remove game"
@@ -408,12 +417,14 @@ function Season() {
 
             <Form.Group className="mb-3" controlId="season-game-opponent">
               <Form.Label>Opponent</Form.Label>
-              <Form.Select name="opponentTeamId" value={gameForm.opponentTeamId} onChange={handleGameChange} required>
-                <option value="">Select an opponent</option>
-                {teams.map(opponent => (
-                  <option key={opponent.id} value={opponent.id}>{opponent.name}</option>
-                ))}
-              </Form.Select>
+              <Form.Control
+                name="opponentName"
+                onChange={handleGameChange}
+                placeholder="Opponent name"
+                required
+                type="text"
+                value={gameForm.opponentName}
+              />
             </Form.Group>
 
             <Form.Check
