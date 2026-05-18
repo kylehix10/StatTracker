@@ -168,11 +168,15 @@
   margin: 0.35rem 0 0;
 }
 
-.login-toggle {
+.login-toggle  {
+  
   display: grid;
   gap: 0.75rem;
   grid-template-columns: 1fr 1fr;
   margin-bottom: 1.25rem;
+  
+  
+  
 }
 
 .login-name-row {
@@ -183,6 +187,8 @@
 
 .login-submit {
   width: 100%;
+  background-color: #71977c;
+  border-color:white;
 }
 
 .record-stat-page {
@@ -315,6 +321,16 @@
 
 .App-link {
   color: #61dafb;
+}
+
+.btn-primary {
+  background-color: #71977c;
+  border-color: #71977c;
+}
+
+.btn-outline-primary {
+  color:#71977c ;
+  border-color: #71977c;
 }
 
 @keyframes App-logo-spin {
