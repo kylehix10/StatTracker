@@ -405,15 +405,7 @@ function Season() {
               />
             </Form.Group>
 
-            <Form.Group className="mb-3" controlId="season-game-season">
-              <Form.Label>Season</Form.Label>
-              <Form.Select name="seasonId" value={gameForm.seasonId} onChange={handleGameChange} required>
-                <option value="">Select a season</option>
-                {seasons.map(season => (
-                  <option key={season.id} value={season.id}>{season.name}</option>
-                ))}
-              </Form.Select>
-            </Form.Group>
+           
 
             <Form.Group className="mb-3" controlId="season-game-opponent">
               <Form.Label>Opponent</Form.Label>
