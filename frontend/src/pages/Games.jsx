@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
-import { createGame, getGames, getSeasons, getTeam } from '../api';
+import { createGame, getGames, getTeam } from '../api';
 
 function Games({ teamId }) {
   const [team, setTeam] = useState(null);
-  const [seasons, setSeasons] = useState([]);
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     date: new Date().toISOString().slice(0, 10),
-    seasonId: '',
     opponentName: '',
     isHome: true
   });
@@ -27,22 +25,15 @@ function Games({ teamId }) {
         setLoading(true);
         setError(null);
 
-        const [teamResponse, gamesResponse, seasonsResponse] = await Promise.all([
+        const [teamResponse, gamesResponse] = await Promise.all([
           getTeam(teamId),
-          getGames(),
-          getSeasons()
+          getGames()
         ]);
 
         const teamGames = gamesResponse.data.filter(g => g.homeTeamId === teamId || g.awayTeamId === teamId);
 
         setTeam(teamResponse.data);
         setGames(teamGames);
-        setSeasons(seasonsResponse.data);
-
-        setForm(current => ({
-          ...current,
-          seasonId: current.seasonId || seasonsResponse.data[0]?.id || ''
-        }));
       } catch (err) {
         setError('Failed to load games data');
       } finally {
@@ -64,14 +55,13 @@ function Games({ teamId }) {
   const handleCreateGame = async (event) => {
     event.preventDefault();
 
-    if (!form.date || !form.seasonId || !form.opponentName.trim()) {
-      setError('Date, season, and opponent are required');
+    if (!form.date || !form.opponentName.trim()) {
+      setError('Date and opponent are required');
       return;
     }
 
     const gameData = {
       date: form.date,
-      seasonId: form.seasonId,
       homeTeamId: form.isHome ? teamId : null,
       awayTeamId: form.isHome ? null : teamId,
       opponentName: form.opponentName
@@ -117,16 +107,6 @@ function Games({ teamId }) {
             onChange={handleChange}
             required
           />
-        </label>
-
-        <label>
-          Season
-          <select name="seasonId" value={form.seasonId} onChange={handleChange} required>
-            <option value="">Select a season</option>
-            {seasons.map(season => (
-              <option key={season.id} value={season.id}>{season.name}</option>
-            ))}
-          </select>
         </label>
 
         <label>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, Form, ListGroup, Modal, Tab, Table, Tabs, Toast, ToastContainer } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
-import { addAthleteToTeam, createAthlete, createGame, deleteAthlete, deleteGame, getGames, getSeasons, getStatsByGame, getTeam } from '../api';
+import { addAthleteToTeam, createAthlete, createGame, deleteAthlete, deleteGame, getGames, getStatsByGame, getTeam } from '../api';
 
 const STAT_COLUMNS = [
   { key: 'completions', label: 'Comp' },
@@ -27,14 +27,12 @@ function Season() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('games');
   const [team, setTeam] = useState(null);
-  const [seasons, setSeasons] = useState([]);
   const [games, setGames] = useState([]);
   const [statTotalsByAthlete, setStatTotalsByAthlete] = useState({});
   const [showCreateGame, setShowCreateGame] = useState(false);
   const [showCreateAthlete, setShowCreateAthlete] = useState(false);
   const [gameForm, setGameForm] = useState({
     date: new Date().toISOString().slice(0, 10),
-    seasonId: '',
     opponentName: '',
     isHome: true
   });
@@ -54,10 +52,9 @@ function Season() {
       setLoading(true);
       setError('');
 
-      const [teamResponse, gamesResponse, seasonsResponse] = await Promise.all([
+      const [teamResponse, gamesResponse] = await Promise.all([
         getTeam(teamId),
-        getGames(),
-        getSeasons()
+        getGames()
       ]);
 
       const teamGames = gamesResponse.data.filter(game => (
@@ -83,13 +80,8 @@ function Season() {
       });
 
       setTeam(teamResponse.data);
-      setSeasons(seasonsResponse.data);
       setGames(teamGames);
       setStatTotalsByAthlete(totals);
-      setGameForm(current => ({
-        ...current,
-        seasonId: current.seasonId || seasonsResponse.data[0]?.id || ''
-      }));
     } catch (err) {
       setError('Unable to load season');
     } finally {
@@ -130,8 +122,8 @@ function Season() {
   const handleCreateGame = async (event) => {
     event.preventDefault();
 
-    if (!gameForm.date || !gameForm.seasonId || !gameForm.opponentName.trim()) {
-      setError('Date, season, and opponent are required');
+    if (!gameForm.date || !gameForm.opponentName.trim()) {
+      setError('Date and opponent are required');
       return;
     }
 
@@ -140,7 +132,6 @@ function Season() {
       setError('');
       await createGame({
         date: gameForm.date,
-        seasonId: gameForm.seasonId,
         homeTeamId: gameForm.isHome ? teamId : null,
         awayTeamId: gameForm.isHome ? null : teamId,
         opponentName: gameForm.opponentName

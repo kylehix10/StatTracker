@@ -3,6 +3,35 @@ import prisma from '../prisma/client.js';
 
 const router = Router();
 
+function getSeasonDates(gameDate) {
+  const year = gameDate.getUTCFullYear();
+
+  return {
+    name: String(year),
+    startDate: new Date(Date.UTC(year, 0, 1)),
+    endDate: new Date(Date.UTC(year, 11, 31))
+  };
+}
+
+async function resolveSeasonId(seasonId, gameDate) {
+  if (seasonId) {
+    return seasonId;
+  }
+
+  const seasonData = getSeasonDates(gameDate);
+  const existingSeason = await prisma.season.findFirst({
+    where: { name: seasonData.name },
+    select: { id: true }
+  });
+
+  if (existingSeason) {
+    return existingSeason.id;
+  }
+
+  const season = await prisma.season.create({ data: seasonData });
+  return season.id;
+}
+
 // GET all games
 router.get('/', async (req, res) => {
   const games = await prisma.game.findMany({
@@ -34,10 +63,11 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   const { date, homeTeamId, awayTeamId, opponentName, seasonId } = req.body;
   const cleanedOpponentName = opponentName?.trim();
+  const gameDate = date ? new Date(date) : null;
 
-  if (!date || !seasonId || (!homeTeamId && !awayTeamId) || (!cleanedOpponentName && (!homeTeamId || !awayTeamId))) {
+  if (!date || Number.isNaN(gameDate.getTime()) || (!homeTeamId && !awayTeamId) || !cleanedOpponentName) {
     return res.status(400).json({
-      error: 'Required fields: date, seasonId, one team, and opponentName'
+      error: 'Required fields: date, one team, and opponentName'
     });
   }
 
@@ -46,13 +76,15 @@ router.post('/', async (req, res) => {
   }
 
   try {
+    const resolvedSeasonId = await resolveSeasonId(seasonId, gameDate);
+
     const game = await prisma.game.create({
       data: {
-        date: new Date(date),
+        date: gameDate,
         homeTeamId: homeTeamId || null,
         awayTeamId: awayTeamId || null,
         opponentName: cleanedOpponentName || null,
-        seasonId
+        seasonId: resolvedSeasonId
       },
       include: {
         homeTeam: true,

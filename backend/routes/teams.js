@@ -43,26 +43,37 @@ router.get('/:id', async (req, res) => {
 
 // POST create a team
 router.post('/', async (req, res) => {
-  const { name, town, level, type, sportId, year, userId } = req.body;
+  const { name, town, level, type, sportId, sportName, sport, year, userId } = req.body;
   const teamLevel = level ?? type;
+  const requestedSportName = (sportName ?? sport)?.trim();
   const teamYear = year !== undefined ? Number(year) : undefined;
   const teamUserId = userId !== undefined ? Number(userId) : undefined;
 
-  if (!name || !town || !teamLevel || !sportId || teamYear === undefined || teamUserId === undefined) {
+  if (!name || !town || !teamLevel || (!sportId && !requestedSportName) || teamYear === undefined || teamUserId === undefined) {
     return res.status(400).json({
-      error: 'Required fields: name, town, level/type, sportId, year, userId'
+      error: 'Required fields: name, town, level/type, sport, year, userId'
     });
   }
 
   try {
+    const resolvedSportId = sportId || (await prisma.sport.upsert({
+      where: { name: requestedSportName },
+      update: {},
+      create: { name: requestedSportName }
+    })).id;
+
     const team = await prisma.team.create({
       data: {
         name,
         town,
         level: teamLevel,
-        sportId,
+        sportId: resolvedSportId,
         year: teamYear,
         userId: teamUserId
+      },
+      include: {
+        sport: true,
+        roster: { include: { athlete: true } }
       }
     });
     res.status(201).json(team);
@@ -104,7 +115,30 @@ router.put('/:id', async (req, res) => {
 // DELETE a team
 router.delete('/:id', async (req, res) => {
   try {
-    await prisma.team.delete({ where: { id: req.params.id } });
+    const games = await prisma.game.findMany({
+      where: {
+        OR: [
+          { homeTeamId: req.params.id },
+          { awayTeamId: req.params.id }
+        ]
+      },
+      select: { id: true }
+    });
+    const gameIds = games.map(game => game.id);
+
+    await prisma.$transaction([
+      prisma.athleteGameStat.deleteMany({ where: { gameId: { in: gameIds } } }),
+      prisma.game.deleteMany({
+        where: {
+          OR: [
+            { homeTeamId: req.params.id },
+            { awayTeamId: req.params.id }
+          ]
+        }
+      }),
+      prisma.athleteTeam.deleteMany({ where: { teamId: req.params.id } }),
+      prisma.team.delete({ where: { id: req.params.id } })
+    ]);
     res.json({ message: 'Team deleted' });
   } catch (error) {
     console.error(error);

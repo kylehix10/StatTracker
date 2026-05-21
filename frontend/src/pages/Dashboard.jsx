@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, Form, Modal, Toast, ToastContainer } from 'react-bootstrap';
-import { createTeam, deleteTeam, getSports, getTeams } from '../api';
+import { createTeam, deleteTeam, getTeams } from '../api';
 
 function getLoggedInUser() {
   const savedUser = localStorage.getItem('statTrackerUser');
@@ -13,40 +13,27 @@ function Dashboard() {
   const [currentUser] = useState(getLoggedInUser);
   const [showCreateTeam, setShowCreateTeam] = useState(false);
   const [userTeams, setUserTeams] = useState([]);
-  const [sports, setSports] = useState([]);
   const [teamForm, setTeamForm] = useState({
     name: '',
     town: '',
     level: '',
-    sportId: '',
+    sportName: '',
     year: new Date().getFullYear()
   });
   const [teamToDelete, setTeamToDelete] = useState(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [loadingOptions, setLoadingOptions] = useState(false);
   const [error, setError] = useState('');
 
   const loadDashboardOptions = useCallback(async () => {
     try {
-      setLoadingOptions(true);
       setError('');
 
-      const [teamsResponse, sportsResponse] = await Promise.all([
-        getTeams(),
-        getSports()
-      ]);
+      const teamsResponse = await getTeams();
 
       setUserTeams(teamsResponse.data.filter(team => team.userId === currentUser?.id));
-      setSports(sportsResponse.data);
-      setTeamForm(current => ({
-        ...current,
-        sportId: current.sportId || sportsResponse.data[0]?.id || ''
-      }));
     } catch (err) {
       setError('Unable to load dashboard options. Make sure the backend server is running.');
-    } finally {
-      setLoadingOptions(false);
     }
   }, [currentUser]);
 
@@ -72,7 +59,7 @@ function Dashboard() {
       return;
     }
 
-    if (!teamForm.name || !teamForm.town || !teamForm.level || !teamForm.sportId || !teamForm.year) {
+    if (!teamForm.name || !teamForm.town || !teamForm.level || !teamForm.sportName.trim() || !teamForm.year) {
       setError('Name, town, level, sport, and year are required');
       return;
     }
@@ -90,7 +77,8 @@ function Dashboard() {
         ...current,
         name: '',
         town: '',
-        level: ''
+        level: '',
+        sportName: ''
       }));
       await loadDashboardOptions();
     } catch (err) {
@@ -267,12 +255,14 @@ function Dashboard() {
 
             <Form.Group className="mb-3" controlId="team-sport">
               <Form.Label>Sport</Form.Label>
-              <Form.Select name="sportId" value={teamForm.sportId} onChange={handleTeamChange} disabled={loadingOptions} required>
-                <option value="">{loadingOptions ? 'Loading sports...' : 'Select a sport'}</option>
-                {sports.map(sport => (
-                  <option key={sport.id} value={sport.id}>{sport.name}</option>
-                ))}
-              </Form.Select>
+              <Form.Control
+                name="sportName"
+                onChange={handleTeamChange}
+                placeholder="Football"
+                required
+                type="text"
+                value={teamForm.sportName}
+              />
             </Form.Group>
 
             <Form.Group className="mb-3" controlId="team-year">
@@ -292,7 +282,7 @@ function Dashboard() {
             <Button variant="secondary" onClick={() => setShowCreateTeam(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={saving || loadingOptions}>
+            <Button type="submit" disabled={saving}>
               {saving ? 'Creating...' : 'Create Team'}
             </Button>
           </Modal.Footer>
