@@ -103,15 +103,31 @@ router.post('/', async (req, res) => {
 // PUT update a game
 router.put('/:id', async (req, res) => {
   const { date, homeTeamId, awayTeamId, opponentName, seasonId } = req.body;
+  const gameDate = date ? new Date(date) : null;
+
+  if (date && Number.isNaN(gameDate.getTime())) {
+    return res.status(400).json({ error: 'Invalid game date' });
+  }
+
   try {
+    const resolvedSeasonId = gameDate
+      ? await resolveSeasonId(seasonId, gameDate)
+      : seasonId;
+
     const game = await prisma.game.update({
       where: { id: req.params.id },
       data: {
-        date: date ? new Date(date) : undefined,
+        date: gameDate || undefined,
         homeTeamId,
         awayTeamId,
         opponentName: opponentName?.trim(),
-        seasonId
+        seasonId: resolvedSeasonId
+      },
+      include: {
+        homeTeam: true,
+        awayTeam: true,
+        season: true,
+        athleteStats: { include: { athlete: true } }
       }
     });
     res.json(game);

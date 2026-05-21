@@ -205,7 +205,7 @@
 
 .season-header {
   margin: 0 auto 1.5rem;
-  max-width: 1120px;
+  max-width: 1320px;
 }
 
 .season-header h1 {
@@ -223,14 +223,14 @@
 .season-page .nav-tabs {
   margin-left: auto;
   margin-right: auto;
-  max-width: 1120px;
+  max-width: 1320px;
 }
 
 .season-actions {
   display: flex;
   justify-content: flex-end;
   margin: 0 auto 1rem;
-  max-width: 1120px;
+  max-width: 1320px;
 }
 
 .season-actions .btn {
@@ -297,6 +297,8 @@
 
 .stat-table-wrap {
   overflow-x: auto;
+  text-align: center;
+  vertical-align: middle;
 }
 
 .stat-table {

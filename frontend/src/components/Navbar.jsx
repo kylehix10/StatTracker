@@ -31,12 +31,6 @@ function BasicExample() {
             <Nav.Link as={NavLink} to="/dashboard">
                         Dashboard
             </Nav.Link>            
-              <NavDropdown title="Sport" id="basic-nav-dropdown">
-              <NavDropdown.Item href="#action/3.1">Action</NavDropdown.Item>
-              <NavDropdown.Item href="#action/3.2">Another action</NavDropdown.Item>
-              <NavDropdown.Divider />
-              <NavDropdown.Item href="#action/3.3">Separated link</NavDropdown.Item>
-            </NavDropdown>
           </Nav>
           <Button
             className="navbar-logout-button"

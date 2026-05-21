@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, Form, ListGroup, Modal, Tab, Table, Tabs, Toast, ToastContainer } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
-import { addAthleteToTeam, createAthlete, createGame, deleteAthlete, deleteGame, getGames, getStatsByGame, getTeam } from '../api';
+import { addAthleteToTeam, createAthlete, deleteAthlete, createGame, deleteGame, getGames, getStatsByGame, getTeam, updateAthlete, updateGame } from '../api';
 
 const STAT_COLUMNS = [
   { key: 'completions', label: 'Comp' },
@@ -22,6 +22,11 @@ const STAT_COLUMNS = [
   { key: 'forcedFumbles', label: 'FF' }
 ];
 
+function formatDateInput(value) {
+  if (!value) return new Date().toISOString().slice(0, 10);
+  return new Date(value).toISOString().slice(0, 10);
+}
+
 function Season() {
   const { teamId } = useParams();
   const navigate = useNavigate();
@@ -30,7 +35,9 @@ function Season() {
   const [games, setGames] = useState([]);
   const [statTotalsByAthlete, setStatTotalsByAthlete] = useState({});
   const [showCreateGame, setShowCreateGame] = useState(false);
+  const [editingGame, setEditingGame] = useState(null);
   const [showCreateAthlete, setShowCreateAthlete] = useState(false);
+  const [editingAthlete, setEditingAthlete] = useState(null);
   const [gameForm, setGameForm] = useState({
     date: new Date().toISOString().slice(0, 10),
     opponentName: '',
@@ -119,6 +126,65 @@ function Season() {
     setAthleteForm(current => ({ ...current, [name]: value }));
   };
 
+  const handleOpenCreateAthlete = () => {
+    setError('');
+    setEditingAthlete(null);
+    setAthleteForm({
+      firstName: '',
+      lastName: '',
+      dateOfBirth: ''
+    });
+    setShowCreateAthlete(true);
+  };
+
+  const handleOpenEditAthlete = (athlete) => {
+    setError('');
+    setEditingAthlete(athlete);
+    setAthleteForm({
+      firstName: athlete.firstName || '',
+      lastName: athlete.lastName || '',
+      dateOfBirth: athlete.dateOfBirth ? formatDateInput(athlete.dateOfBirth) : ''
+    });
+    setShowCreateAthlete(true);
+  };
+
+  const handleCloseAthleteModal = () => {
+    if (!saving) {
+      setShowCreateAthlete(false);
+      setEditingAthlete(null);
+    }
+  };
+
+  const handleOpenCreateGame = () => {
+    setError('');
+    setEditingGame(null);
+    setGameForm({
+      date: new Date().toISOString().slice(0, 10),
+      opponentName: '',
+      isHome: true
+    });
+    setShowCreateGame(true);
+  };
+
+  const handleOpenEditGame = (event, game) => {
+    event.stopPropagation();
+    setError('');
+    setEditingGame(game);
+    setGameForm({
+      date: formatDateInput(game.date),
+      opponentName: game.opponentName || '',
+      isHome: game.homeTeamId === teamId
+    });
+    setShowCreateGame(true);
+  };
+
+  const handleCloseGameModal = () => {
+    if (!saving) {
+      setShowCreateGame(false);
+      setEditingGame(null);
+    }
+  };
+
   const handleCreateGame = async (event) => {
     event.preventDefault();
 
@@ -130,13 +196,21 @@ function Season() {
     try {
       setSaving(true);
       setError('');
-      await createGame({
+      const payload = {
         date: gameForm.date,
         homeTeamId: gameForm.isHome ? teamId : null,
         awayTeamId: gameForm.isHome ? null : teamId,
         opponentName: gameForm.opponentName
-      });
+      };
+
+      if (editingGame) {
+        await updateGame(editingGame.id, payload);
+      } else {
+        await createGame(payload);
+      }
+
       setShowCreateGame(false);
+      setEditingGame(null);
       setGameForm(current => ({
         ...current,
         opponentName: ''
@@ -160,16 +234,24 @@ function Season() {
     try {
       setSaving(true);
       setError('');
-      const athleteResponse = await createAthlete({
+      const payload = {
         firstName: athleteForm.firstName,
         lastName: athleteForm.lastName,
         dateOfBirth: athleteForm.dateOfBirth || null
-      });
-      await addAthleteToTeam(athleteResponse.data.id, {
-        teamId,
-        startDate: new Date().toISOString().slice(0, 10)
-      });
+      };
+
+      if (editingAthlete) {
+        await updateAthlete(editingAthlete.id, payload);
+      } else {
+        const athleteResponse = await createAthlete(payload);
+        await addAthleteToTeam(athleteResponse.data.id, {
+          teamId,
+          startDate: new Date().toISOString().slice(0, 10)
+        });
+      }
+
       setShowCreateAthlete(false);
+      setEditingAthlete(null);
       setAthleteForm({
         firstName: '',
         lastName: '',
@@ -243,12 +325,12 @@ function Season() {
 
       <div className="season-actions">
         {activeTab === 'games' ? (
-          <Button onClick={() => setShowCreateGame(true)}>
+          <Button onClick={handleOpenCreateGame}>
             <i className="bi bi-plus-circle-fill"></i>
             <span>Create Game</span>
           </Button>
         ) : (
-          <Button onClick={() => setShowCreateAthlete(true)}>
+          <Button onClick={handleOpenCreateAthlete}>
             <i className="bi bi-plus-circle-fill"></i>
             <span>Create Athlete</span>
           </Button>
@@ -277,11 +359,20 @@ function Season() {
                   tabIndex={0}
                 >
                   <div>
-                    <strong>{new Date(game.date).toLocaleDateString()}</strong>
-                    <span>{game.season?.name}</span>
+                    <strong>{getGameTeamName(game, 'away')} vs {getGameTeamName(game, 'home')}</strong>
+                    <span>{new Date(game.date).toLocaleDateString()}</span>                  
                   </div>
                   <div>
-                    {getGameTeamName(game, 'home')} vs {getGameTeamName(game, 'away')}
+                    <Button
+                      aria-label="Edit game"
+                      onClick={(event) => handleOpenEditGame(event, game)}
+                      onKeyDown={(event) => event.stopPropagation()}
+                      size="sm"
+                      type="button"
+                      variant="outline-primary"
+                    >
+                      Edit
+                    </Button>
                   </div>
                   <Button
                     aria-label="Remove game"
@@ -321,11 +412,23 @@ function Season() {
                     const totals = statTotalsByAthlete[athlete.id] || {};
                     return (
                       <tr key={athlete.id}>
-                        <th scope="row">{athlete.firstName} {athlete.lastName}</th>
+                        <th scope="row">
+                            {athlete.firstName} {athlete.lastName}
+                        </th>
                         {STAT_COLUMNS.map(column => (
                           <td key={column.key}>{totals[column.key] || 0}</td>
                         ))}
                         <td>
+                          <Button
+                            aria-label={`Edit ${athlete.firstName} ${athlete.lastName}`}
+                            className="me-2"
+                            onClick={() => handleOpenEditAthlete(athlete)}
+                            size="sm"
+                            type="button"
+                            variant="outline-primary"
+                          >
+                            Edit
+                          </Button>
                           <Button
                             aria-label={`Remove ${athlete.firstName} ${athlete.lastName}`}
                             disabled={removingId === athlete.id}
@@ -376,10 +479,10 @@ function Season() {
         </Toast>
       </ToastContainer>
 
-      <Modal show={showCreateGame} onHide={() => setShowCreateGame(false)} centered>
+      <Modal show={showCreateGame} onHide={handleCloseGameModal} centered>
         <Form onSubmit={handleCreateGame}>
           <Modal.Header closeButton>
-            <Modal.Title>Create Game</Modal.Title>
+            <Modal.Title>{editingGame ? 'Edit Game' : 'Create Game'}</Modal.Title>
           </Modal.Header>
 
           <Modal.Body>
@@ -420,20 +523,20 @@ function Season() {
           </Modal.Body>
 
           <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowCreateGame(false)}>
+            <Button variant="secondary" onClick={handleCloseGameModal}>
               Cancel
             </Button>
             <Button type="submit" disabled={saving}>
-              {saving ? 'Creating...' : 'Create Game'}
+              {saving ? 'Saving...' : editingGame ? 'Save Game' : 'Create Game'}
             </Button>
           </Modal.Footer>
         </Form>
       </Modal>
 
-      <Modal show={showCreateAthlete} onHide={() => setShowCreateAthlete(false)} centered>
+      <Modal show={showCreateAthlete} onHide={handleCloseAthleteModal} centered>
         <Form onSubmit={handleCreateAthlete}>
           <Modal.Header closeButton>
-            <Modal.Title>Create Athlete</Modal.Title>
+            <Modal.Title>{editingAthlete ? 'Edit Athlete' : 'Create Athlete'}</Modal.Title>
           </Modal.Header>
 
           <Modal.Body>
@@ -473,11 +576,11 @@ function Season() {
           </Modal.Body>
 
           <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowCreateAthlete(false)}>
+            <Button variant="secondary" onClick={handleCloseAthleteModal}>
               Cancel
             </Button>
             <Button type="submit" disabled={saving}>
-              {saving ? 'Creating...' : 'Create Athlete'}
+              {saving ? 'Saving...' : editingAthlete ? 'Save Athlete' : 'Create Athlete'}
             </Button>
           </Modal.Footer>
         </Form>
