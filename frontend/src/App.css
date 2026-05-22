@@ -7,6 +7,14 @@
   pointer-events: none;
 }
 
+.app-navbar-container {
+  margin: 0 auto;
+  max-width: 1320px;
+  padding-left: 0;
+  padding-right: 0;
+  width: calc(100% - 4rem);
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .App-logo {
     animation: App-logo-spin infinite 20s linear;
@@ -363,6 +371,12 @@
 .btn-outline-primary {
   color:#71977c ;
   border-color: #71977c;
+}
+
+@media (max-width: 768px) {
+  .app-navbar-container {
+    width: calc(100% - 2rem);
+  }
 }
 
 @keyframes App-logo-spin {

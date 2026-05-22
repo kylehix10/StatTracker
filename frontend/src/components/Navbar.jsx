@@ -21,7 +21,7 @@ function BasicExample() {
 
   return (
     <BootstrapNavbar expand="lg"  style={{backgroundColor: '#738678bb'}}>
-      <Container>
+      <Container className="app-navbar-container" fluid>
         <BootstrapNavbar.Brand as={NavLink} to="/dashboard">StatTracker</BootstrapNavbar.Brand>
         <BootstrapNavbar.Toggle aria-controls="basic-navbar-nav" />
         <BootstrapNavbar.Collapse id="basic-navbar-nav">
