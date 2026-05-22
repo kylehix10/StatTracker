@@ -32,6 +32,7 @@ function RecordStat() {
   const [game, setGame] = useState(null);
   const [athletes, setAthletes] = useState([]);
   const [statsByAthlete, setStatsByAthlete] = useState({});
+  const [favoriteAthleteIds, setFavoriteAthleteIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showSaveToast, setShowSaveToast] = useState(false);
@@ -95,6 +96,29 @@ function RecordStat() {
   }, [game]);
 
   const seasonTeamId = location.state?.teamId || game?.homeTeamId || game?.awayTeamId;
+
+  const sortedAthletes = useMemo(() => {
+    const favoriteIds = new Set(favoriteAthleteIds);
+
+    return [...athletes].sort((firstAthlete, secondAthlete) => {
+      const firstIsFavorite = favoriteIds.has(firstAthlete.id);
+      const secondIsFavorite = favoriteIds.has(secondAthlete.id);
+
+      if (firstIsFavorite === secondIsFavorite) {
+        return 0;
+      }
+
+      return firstIsFavorite ? -1 : 1;
+    });
+  }, [athletes, favoriteAthleteIds]);
+
+  const handleToggleFavorite = (athleteId) => {
+    setFavoriteAthleteIds(current => (
+      current.includes(athleteId)
+        ? current.filter(id => id !== athleteId)
+        : [...current, athleteId]
+    ));
+  };
 
   const handleStatChange = (athleteId, statKey, value) => {
     setStatsByAthlete(current => ({
@@ -168,19 +192,36 @@ function RecordStat() {
           <thead>
             <tr>
               <th>Athlete</th>
-              <th>Team</th>
+              <th>Favorite</th>
               {STAT_COLUMNS.map(column => (
                 <th key={column.key}>{column.label}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {athletes.map(athlete => {
+            {sortedAthletes.map(athlete => {
               const athleteStats = statsByAthlete[athlete.id] || emptyStats();
+              const isFavorite = favoriteAthleteIds.includes(athlete.id);
+
               return (
                 <tr key={athlete.id}>
                   <th scope="row">{athlete.firstName} {athlete.lastName}</th>
-                  <td>{athlete.teamName}</td>
+                  <td>
+                    <Button
+                      aria-label={`${isFavorite ? 'Remove' : 'Add'} ${athlete.firstName} ${athlete.lastName} ${isFavorite ? 'from' : 'to'} favorites`}
+                      className="favorite-athlete-button"
+                      onClick={() => handleToggleFavorite(athlete.id)}
+                      size="sm"
+                      title={isFavorite ? 'Remove favorite' : 'Favorite'}
+                      type="button"
+                      variant="link"
+                    >
+                      <i
+                        aria-hidden="true"
+                        className={`bi ${isFavorite ? 'bi-star-fill' : 'bi-star'}`}
+                      ></i>
+                    </Button>
+                  </td>
                   {STAT_COLUMNS.map(column => (
                     <td key={column.key}>
                       <input
