@@ -1,9 +1,20 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL;
-//const BASE = API_URL
-  //? API_URL.replace(/\/$/, '')
- // : 'http://localhost:5000/api';
+function getApiBaseUrl() {
+  const apiUrl = process.env.REACT_APP_API_URL?.trim();
+
+  if (apiUrl) {
+    return apiUrl.replace(/\/$/, '');
+  }
+
+  if (process.env.NODE_ENV === 'development') {
+    return 'http://localhost:5000/api';
+  }
+
+  throw new Error('Missing REACT_APP_API_URL. Set it in the frontend Vercel project and redeploy.');
+}
+
+const BASE = getApiBaseUrl();
 
 
 // Users
