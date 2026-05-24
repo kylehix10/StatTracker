@@ -38,6 +38,8 @@ function Season() {
   const [editingGame, setEditingGame] = useState(null);
   const [showCreateAthlete, setShowCreateAthlete] = useState(false);
   const [editingAthlete, setEditingAthlete] = useState(null);
+  const [sortStatKey, setSortStatKey] = useState('passingYards');
+  const [sortDirection, setSortDirection] = useState('desc');
   const [gameForm, setGameForm] = useState({
     date: new Date().toISOString().slice(0, 10),
     opponentName: '',
@@ -103,6 +105,22 @@ function Season() {
   const roster = useMemo(() => {
     return team?.roster?.map(row => row.athlete) || [];
   }, [team]);
+
+  const sortedRoster = useMemo(() => {
+    return [...roster].sort((firstAthlete, secondAthlete) => {
+      const firstTotal = Number(statTotalsByAthlete[firstAthlete.id]?.[sortStatKey] || 0);
+      const secondTotal = Number(statTotalsByAthlete[secondAthlete.id]?.[sortStatKey] || 0);
+      const sortMultiplier = sortDirection === 'asc' ? 1 : -1;
+
+      if (firstTotal !== secondTotal) {
+        return (firstTotal - secondTotal) * sortMultiplier;
+      }
+
+      return `${firstAthlete.lastName} ${firstAthlete.firstName}`.localeCompare(
+        `${secondAthlete.lastName} ${secondAthlete.firstName}`
+      );
+    });
+  }, [roster, sortDirection, sortStatKey, statTotalsByAthlete]);
 
   const getGameTeamName = (game, side) => {
     const teamName = game[`${side}Team`]?.name;
@@ -330,10 +348,41 @@ function Season() {
             <span>Create Game</span>
           </Button>
         ) : (
-          <Button onClick={handleOpenCreateAthlete}>
-            <i className="bi bi-plus-circle-fill"></i>
-            <span>Create Athlete</span>
-          </Button>
+          <>
+            <div className="season-sort-controls">
+              <Form.Group controlId="season-roster-sort-stat">
+                <Form.Label>Sort stat</Form.Label>
+                <Form.Select
+                  aria-label="Sort roster by stat"
+                  onChange={(event) => setSortStatKey(event.target.value)}
+                  size="sm"
+                  value={sortStatKey}
+                >
+                  {STAT_COLUMNS.map(column => (
+                    <option key={column.key} value={column.key}>{column.label}</option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+
+              <Form.Group controlId="season-roster-sort-direction">
+                <Form.Label>Order</Form.Label>
+                <Form.Select
+                  aria-label="Sort roster order"
+                  onChange={(event) => setSortDirection(event.target.value)}
+                  size="sm"
+                  value={sortDirection}
+                >
+                  <option value="desc">High to low</option>
+                  <option value="asc">Low to high</option>
+                </Form.Select>
+              </Form.Group>
+            </div>
+
+            <Button onClick={handleOpenCreateAthlete}>
+              <i className="bi bi-plus-circle-fill"></i>
+              <span>Create Athlete</span>
+            </Button>
+          </>
         )}
       </div>
 
@@ -408,7 +457,7 @@ function Season() {
                   </tr>
                 </thead>
                 <tbody>
-                  {roster.map(athlete => {
+                  {sortedRoster.map(athlete => {
                     const totals = statTotalsByAthlete[athlete.id] || {};
                     return (
                       <tr key={athlete.id}>

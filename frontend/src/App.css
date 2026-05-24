@@ -151,6 +151,116 @@
   text-align: left;
 }
 
+.splash-page {
+  background: #eef2ef;
+  color: #26352b;
+  min-height: 100vh;
+  overflow: hidden;
+  padding: 1.5rem 2rem 2rem;
+  position: relative;
+  text-align: left;
+}
+
+.splash-topbar {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin: 0 auto;
+  max-width: 1120px;
+  position: relative;
+  z-index: 1;
+}
+
+.splash-background-image {
+  bottom: 1rem;
+  max-width: 380px;
+  opacity: 0.14;
+  pointer-events: none;
+  position: absolute;
+  right: 4rem;
+  width: 34vw;
+}
+
+.splash-topbar h1 {
+  font-size: 1.35rem;
+  margin: 0;
+}
+
+.splash-hero {
+  align-items: center;
+  display: grid;
+  gap: 3rem;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.65fr);
+  margin: 0 auto;
+  max-width: 1120px;
+  min-height: calc(100vh - 6rem);
+  position: relative;
+  z-index: 1;
+}
+
+.splash-hero-content {
+  max-width: 720px;
+}
+
+.splash-kicker {
+  color: #71977c;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin: 0 0 0.75rem;
+  text-transform: uppercase;
+}
+
+.splash-hero h2 {
+  color: #1f2d24;
+  font-size: clamp(2.35rem, 7vw, 4.75rem);
+  font-weight: 800;
+  line-height: 1.02;
+  margin: 0;
+  max-width: 850px;
+}
+
+.splash-hero-content > p:not(.splash-kicker) {
+  color: #4b5750;
+  font-size: 1.15rem;
+  line-height: 1.65;
+  margin: 1.25rem 0 1.75rem;
+  max-width: 620px;
+}
+
+.splash-scoreboard {
+  background: #ffffff;
+  border: 1px solid #d9e0dc;
+  border-radius: 8px;
+  box-shadow: 0 16px 40px rgba(47, 62, 51, 0.14);
+  overflow: hidden;
+}
+
+.splash-scoreboard-header {
+  align-items: center;
+  background: #26352b;
+  color: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+}
+
+.splash-stat-row {
+  align-items: center;
+  border-top: 1px solid #e8eee9;
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+}
+
+.splash-stat-row span {
+  color: #5f6b62;
+}
+
+.splash-stat-row strong {
+  color: #8a6d1d;
+  font-size: 1.4rem;
+}
+
 .login-panel {
   background: #ffffff;
   border: 1px solid #d9e0dc;
@@ -235,7 +345,9 @@
 }
 
 .season-actions {
+  align-items: end;
   display: flex;
+  gap: 0.75rem;
   justify-content: flex-end;
   margin: 0 auto 1rem;
   max-width: 1320px;
@@ -245,6 +357,23 @@
   align-items: center;
   display: inline-flex;
   gap: 0.45rem;
+}
+
+.season-sort-controls {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.season-sort-controls .form-label {
+  color: #4b5750;
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+}
+
+.season-sort-controls .form-select {
+  min-width: 8.5rem;
 }
 
 .season-game-row {
@@ -376,6 +505,36 @@
 @media (max-width: 768px) {
   .app-navbar-container {
     width: calc(100% - 2rem);
+  }
+
+  .splash-page {
+    padding: 1rem;
+  }
+
+  .splash-background-image {
+    right: -2rem;
+    width: 260px;
+  }
+
+  .splash-hero {
+    align-items: start;
+    gap: 2rem;
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding-top: 4rem;
+  }
+
+  .splash-hero h2 {
+    font-size: 2.6rem;
+  }
+
+  .season-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .season-actions .btn {
+    justify-content: center;
   }
 }
 

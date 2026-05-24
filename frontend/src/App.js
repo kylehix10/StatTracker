@@ -5,16 +5,18 @@ import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import RecordStat from './pages/RecordStat';
 import Season from './pages/Season';
+import Splash from './pages/Splash';
 
 function AppRoutes() {
   const location = useLocation();
-  const showNavbar = location.pathname !== '/';
+  const showNavbar = !['/', '/login'].includes(location.pathname);
 
   return (
     <>
       {showNavbar && <Navbar />}
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={<Splash />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/season/:teamId" element={<Season />} />
         <Route path="/record-stat/:gameId" element={<RecordStat />} />
